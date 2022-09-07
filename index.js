@@ -101,13 +101,13 @@ api convention:
   //   res.send(bookings);
   // });
 
-app.get('/allBooking', async(req,res)=>{
+app.get('/myBooking', async(req, res) =>{
   const patient = req.query.patient;
-  //const query = {patient:patient};
-  const booking = await bookingCollection.find(patient).toArray();
-  //res.send(console.log(`There are ${booking} plants in the collection`));
-  console.log(booking);
-  res.send(booking);
+  const query = {patient: patient};
+  const bookings = await bookingCollection.find(query).toArray();
+  //res.send(console.log(`There are ${bookings} plants in the collection`));
+  console.log(bookings);
+  res.send(bookings);
 })
 
 
