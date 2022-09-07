@@ -92,20 +92,22 @@ api convention:
   //
   // });
 
-  app.get('/booking', async(req,res)=>{
-    const patient = req.query.patient;
-    //const patient = req.query.patient;
-    //const patient = req.query.paitent;
-    const query = { patient: patient};
-    const bookings = await bookingCollection.find(query).toArray();
-    res.send(bookings);
-  });
+  // app.get('/booking', async(req,res)=>{
+  //   const patient = req.query.patient;
+  //   //const patient = req.query.patient;
+  //   //const patient = req.query.paitent;
+  //   const query = { patient: patient};
+  //   const bookings = await bookingCollection.find(query).toArray();
+  //   res.send(bookings);
+  // });
 
-app.get('/booking', async(req,res)=>{
+app.get('/allBooking', async(req,res)=>{
   const patient = req.query.patient;
-  const query = {patient: patient};
-  const bookings = await bookingCollection.find(query).toArray();
-  res.send(bookings);
+  //const query = {patient:patient};
+  const booking = await bookingCollection.find(patient).toArray();
+  //res.send(console.log(`There are ${booking} plants in the collection`));
+  console.log(booking);
+  res.send(booking);
 })
 
 
