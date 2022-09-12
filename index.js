@@ -18,6 +18,7 @@ async function run(){
     await client.connect();
     const serviceCollection = client.db("doctors_portal").collection("services");
     const bookingCollection = client.db("doctors_portal").collection("bookings");
+    const userCollection = client.db("doctors_portal").collection("users");
     console.log('HH');
 
 
@@ -27,7 +28,8 @@ api convention:
 2.app.get('/booking/:id')//get a specific // ID
 3.appp.post('/booking') // add a new/post a booking
 4.app.patch('/booking/:id')// update a booking // IDEA:
-5.app.delete('/booking/:id') //delete a booking
+5.app.put('/booking/:id')// upsert => update[if exist] or insert[if not exist]
+6.app.delete('/booking/:id') //delete a booking
 */
 
 
@@ -39,6 +41,22 @@ api convention:
       const services = await cursor.toArray();
       res.send(services);
     });
+
+    app.put('/user/:email', async(req,res)=>{
+      const email = req.params.email;
+      const user = req.body;
+      const query = {email: email};
+      const options = {upsert: true};
+      // create a document that sets the plot of the movie
+    const updateDoc = {
+      $set:user,
+    };
+    const result = await userCollection.updateOne(query, updateDoc, options);
+    console.log('put api created');
+    res.send(result);
+
+
+    })
 
     /* manual way get api of available slots
     app.get('/available', async(req,res)=>{
