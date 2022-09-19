@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -13,6 +14,22 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ngyafc8.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+function verifyJWT(req,res,next){
+  const authHeader = req.headers.authorization;
+  if(!authHeader){
+    return res.status(401).send({message:'Unauthorized access'});
+  }
+  const token = authHeader.split(' ')[1];
+  // verify a token symmetric
+   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded) {
+    if(err){
+      return res.status(403).send({message:'Forbidden acccess'})
+    }
+    req.decoded = decoded;
+    next();
+    //console.log(decoded) // bar
+});
+}
 async function run(){
   try{
     await client.connect();
@@ -32,7 +49,10 @@ api convention:
 6.app.delete('/booking/:id') //delete a booking
 */
 
-
+     app.get('/user', async(req,res)=>{
+      const users = await userCollection.find().toArray();
+      res.send(users);
+     })
 
 
     app.get('/service', async (req,res)=>{
@@ -52,8 +72,9 @@ api convention:
       $set:user,
     };
     const result = await userCollection.updateOne(query, updateDoc, options);
+    const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET,{ expiresIn: 60 * 60 });
     console.log('put api created');
-    res.send(result);
+    res.send({result, token:token});
 
 
     })
@@ -119,13 +140,21 @@ api convention:
   //   res.send(bookings);
   // });
 
-app.get('/myBooking', async(req, res) =>{
+app.get('/myBooking',verifyJWT, async(req, res) =>{
   const patient = req.query.patient;
+  // const authorization = req.headers.authorization;
+  // console.log('auth header',authorization);
+  const decodedEmail = req.decoded.email;
+  if(patient === decodedEmail){
   const query = {patient: patient};
   const bookings = await bookingCollection.find(query).toArray();
   //res.send(console.log(`There are ${bookings} plants in the collection`));
   console.log(bookings);
-  res.send(bookings);
+  return res.send(bookings);
+}
+else{
+  return res.status(403).send({message: 'forbiffen access'});
+}
 })
 
 
