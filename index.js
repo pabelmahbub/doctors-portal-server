@@ -49,7 +49,7 @@ api convention:
 6.app.delete('/booking/:id') //delete a booking
 */
 
-     app.get('/user', async(req,res)=>{
+     app.get('/user', verifyJWT, async(req,res)=>{
       const users = await userCollection.find().toArray();
       res.send(users);
      })
@@ -61,6 +61,20 @@ api convention:
       const services = await cursor.toArray();
       res.send(services);
     });
+
+    app.put('/user/admin/:email', verifyJWT, async(req,res)=>{
+      const email = req.params.email;
+      const filter = {email: email};
+      const options = {upsert: true};
+      // create a document that sets the plot of the movie
+    const updateDoc = {
+      $set:{role:'admin'},
+    };
+    const result = await userCollection.updateOne(filter, updateDoc, options);
+    console.log('admin api created');
+    res.send(result);
+    })
+
 
     app.put('/user/:email', async(req,res)=>{
       const email = req.params.email;
@@ -75,8 +89,6 @@ api convention:
     const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET,{ expiresIn: 60 * 60 });
     console.log('put api created');
     res.send({result, token:token});
-
-
     })
 
     /* manual way get api of available slots
