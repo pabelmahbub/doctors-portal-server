@@ -62,17 +62,32 @@ api convention:
       res.send(services);
     });
 
+    app.get('/admin/:email', async(req,res)=>{
+      const email =req.params.email;
+      const user = await userCollection.findOne({email:email});
+      const isAdmin = user.role === 'admin';
+      res.send({admin: isAdmin});
+    })
+
     app.put('/user/admin/:email', verifyJWT, async(req,res)=>{
       const email = req.params.email;
-      const filter = {email: email};
-      const options = {upsert: true};
-      // create a document that sets the plot of the movie
-    const updateDoc = {
-      $set:{role:'admin'},
-    };
-    const result = await userCollection.updateOne(filter, updateDoc, options);
-    console.log('admin api created');
-    res.send(result);
+      const requester = req.decoded.email;
+      const requesterAccount = await userCollection.findOne({email:requester});
+      if(requesterAccount.role === 'admin'){
+        const filter = {email: email};
+        const options = {upsert: true};
+        // create a document that sets the plot of the movie
+      const updateDoc = {
+        $set:{role:'admin'},
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      console.log('admin api created');
+      res.send(result);
+      }
+      else{
+        res.status(403).send({message: 'forbidden'});
+      }
+   
     })
 
 
