@@ -36,6 +36,7 @@ async function run(){
     const serviceCollection = client.db("doctors_portal").collection("services");
     const bookingCollection = client.db("doctors_portal").collection("bookings");
     const userCollection = client.db("doctors_portal").collection("users");
+    const doctorCollection = client.db("doctors_portal").collection("doctors");
     console.log('HH');
 
 
@@ -57,7 +58,7 @@ api convention:
 
     app.get('/service', async (req,res)=>{
       const query ={};
-      const cursor = serviceCollection.find(query);
+      const cursor = serviceCollection.find(query).project({name: 1});
       const services = await cursor.toArray();
       res.send(services);
     });
@@ -87,7 +88,7 @@ api convention:
       else{
         res.status(403).send({message: 'forbidden'});
       }
-   
+
     })
 
 
@@ -206,10 +207,16 @@ else{
       const result = await bookingCollection.insertOne(booking);
       res.send({success: true, result});
       console.log(`A document was inserted with the _id: ${result.insertedId}`);
+    });
 
-    })
+    app.post('/doctor', verifyJWT, async(req,res)=>{
+      const doctor= req.body;
+      console.log(doctor);
+      const result = await doctorCollection.insertOne(doctor);
+      res.send(result);
+      console.log('doctor api is hit',result);
 
-
+    });
 
 
   }finally{
