@@ -14,6 +14,8 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ngyafc8.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+
+
 function verifyJWT(req,res,next){
   const authHeader = req.headers.authorization;
   if(!authHeader){
@@ -50,6 +52,16 @@ api convention:
 6.app.delete('/booking/:id') //delete a booking
 */
 
+const verifyAdmin = async(req, res, next) =>{
+  const requester = req.decoded.email;
+  const requesterAccount = await userCollection.findOne({ email:requester });
+  if(requesterAccount.role === 'admin'){
+    next();
+  }
+  else{
+      res.status(403).send({message: 'Forbidden acccess'})
+    }
+}
      app.get('/user', verifyJWT, async(req,res)=>{
       const users = await userCollection.find().toArray();
       res.send(users);
@@ -70,12 +82,9 @@ api convention:
       res.send({admin: isAdmin});
     })
 
-    app.put('/user/admin/:email', verifyJWT, async(req,res)=>{
+    app.put('/user/admin/:email', verifyJWT,verifyAdmin, async(req,res)=>{
       const email = req.params.email;
-      const requester = req.decoded.email;
-      const requesterAccount = await userCollection.findOne({email:requester});
-      if(requesterAccount.role === 'admin'){
-        const filter = {email: email};
+
         const options = {upsert: true};
         // create a document that sets the plot of the movie
       const updateDoc = {
@@ -84,11 +93,6 @@ api convention:
       const result = await userCollection.updateOne(filter, updateDoc, options);
       console.log('admin api created');
       res.send(result);
-      }
-      else{
-        res.status(403).send({message: 'forbidden'});
-      }
-
     })
 
 
@@ -209,7 +213,7 @@ else{
       console.log(`A document was inserted with the _id: ${result.insertedId}`);
     });
 
-    app.post('/doctor', verifyJWT, async(req,res)=>{
+    app.post('/doctor', verifyJWT, verifyAdmin, async(req,res)=>{
       const doctor= req.body;
       console.log(doctor);
       const result = await doctorCollection.insertOne(doctor);
@@ -217,6 +221,17 @@ else{
       console.log('doctor api is hit',result);
 
     });
+
+    app.get('/doctor', verifyJWT, verifyAdmin, async(req,res)=>{
+       const doctors = await doctorCollection.find().toArray();
+       res.send(doctors);
+    });
+    app.delete('/doctor/:email', verifyJWT, verifyAdmin, async(req,res)=>{
+      const email = req.params.email;
+      const filter = {email:email};
+      const result = await doctorCollection.deleteOne(filter);
+      res.send(result);
+    })
 
 
   }finally{
