@@ -5,6 +5,9 @@ const app = express();
 const port = process.env.PORT || 5000;
 const {ObjectId} = require('mongodb'); // or ObjectID
 
+const Stripe = require('stripe');
+const stripe = Stripe(`${process.env.STRIPE_SECRET_KEY}`);
+
 app.use(cors());
 app.use(express.json());
 
@@ -67,6 +70,22 @@ const verifyAdmin = async(req, res, next) =>{
       const users = await userCollection.find().toArray();
       res.send(users);
      })
+
+
+
+     //payment API of stripe
+     app.post('/create-payment-intent', verifyJWT, async(req,res)=>{
+      const service = req.body;
+      const price = service.price;
+      const amount = price*100;
+      const paymentIntent = await stripe.paymentIntent.create({
+        amount:amount,
+        currency:'yen',
+        payment_method_types:['card'],
+      });
+        res.send({cleintSecret: paymentIntent.client_secret})
+        console.log('payment api is hit');
+     });
 
 
     app.get('/service', async (req,res)=>{
