@@ -3,6 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 5000;
+const {ObjectId} = require('mongodb'); // or ObjectID
 
 app.use(cors());
 app.use(express.json());
@@ -132,6 +133,7 @@ const verifyAdmin = async(req, res, next) =>{
     */
 
       //this api is best to make in mongodb.use aggregate lookup, pipeline, match, group:
+      // display all data in Service componet:
       app.get('/available', async(req,res)=>{
       const date = req.query.date;
       //step1:get all service
@@ -172,6 +174,7 @@ const verifyAdmin = async(req, res, next) =>{
   //   res.send(bookings);
   // });
 
+// personal booking api
 app.get('/myBooking',verifyJWT, async(req, res) =>{
   const patient = req.query.patient;
   // const authorization = req.headers.authorization;
@@ -189,6 +192,13 @@ else{
 }
 })
 
+//payment dynamic api in dashboard:
+app.get('/booking/:id', verifyJWT, async(req, res) =>{
+  const id = req.params.id;
+  const query = {_id: ObjectId(id)};
+  const booking = await bookingCollection.findOne(query);
+  res.send(booking);
+})
 
 
     // To post data to db:
@@ -201,6 +211,7 @@ else{
     // })
 
 
+   //booking from a modal [patient book it]
     app.post('/booking', async(req,res)=>{
       const booking = req.body;
       const query = {treatment: booking.treatment, date:booking.date, patient:booking.patient}
@@ -213,6 +224,8 @@ else{
       console.log(`A document was inserted with the _id: ${result.insertedId}`);
     });
 
+
+   //dashboard api to create a doctor profile
     app.post('/doctor', verifyJWT, verifyAdmin, async(req,res)=>{
       const doctor= req.body;
       console.log(doctor);
@@ -222,10 +235,13 @@ else{
 
     });
 
+   //display doctor information in dashboard:
     app.get('/doctor', verifyJWT, verifyAdmin, async(req,res)=>{
        const doctors = await doctorCollection.find().toArray();
        res.send(doctors);
     });
+
+    //delete doctor profile from dashboard:
     app.delete('/doctor/:email', verifyJWT, verifyAdmin, async(req,res)=>{
       const email = req.params.email;
       const filter = {email:email};
@@ -247,3 +263,7 @@ app.get('/',(req,res)=>{
 app.listen(port, ()=>{
   console.log(`Example app listening in port ${port}`)
 })
+
+
+//for payment gateway stripe:
+// npm install --save stripe
